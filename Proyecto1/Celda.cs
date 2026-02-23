@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace Proyecto1
 {
@@ -10,15 +11,26 @@ namespace Proyecto1
 
     public class Paciente 
     {
-        public string Nombre { get; set; }
+        public string? Nombre { get; set; }
         public int Edad { get; set; }
-        public int M { get; set; } // Tamaño de la rejilla (múltiplo de 10) [cite: 28]
-        public int PeriodosMax { get; set; } // Límite de períodos a evaluar [cite: 97]
+        public int M { get; set; } 
+        public int PeriodosMax { get; set; }
         public ListaEnlazada<Celda> CelulasContagiadas { get; set; }
 
         public Paciente() 
         {
             CelulasContagiadas = new ListaEnlazada<Celda>();
+        }
+
+        public bool EstaContagiada(int f, int c) 
+        {
+            Nodo<Celda>? act = CelulasContagiadas.Primero;
+            while (act != null) 
+            {
+                if (act.Valor != null && act.Valor.Fila == f && act.Valor.Columna == c) return true;
+                act = act.Siguiente;
+            }
+            return false;
         }
     }
 }

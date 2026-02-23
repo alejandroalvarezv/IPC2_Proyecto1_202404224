@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pacientes>
+  <paciente>
+    <datospersonales>
+      <nombre>Alejandro</nombre>
+      <edad>20</edad>
+    </datospersonales>
+    <periodos>10</periodos>
+    <m>10</m>
+    <malla>
+      <celda f="1" c="2"/>
+      <celda f="2" c="3"/>
+      <celda f="3" c="1"/>
+      <celda f="3" c="2"/>
+      <celda f="3" c="3"/>
+    </malla>
+  </paciente>
+</pacientes>

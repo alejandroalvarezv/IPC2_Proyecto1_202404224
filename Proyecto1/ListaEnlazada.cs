@@ -1,10 +1,9 @@
 using System;
-
 namespace Proyecto1
 {
     public class ListaEnlazada<T> 
     {
-        public Nodo<T> Primero { get; set; }
+        public Nodo<T>? Primero { get; set; }
         private int _conteo = 0; 
 
         public int Conteo => _conteo;

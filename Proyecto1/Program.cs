@@ -1,25 +1,23 @@
 ﻿using System;
-using System.Xml; // Importante para la lectura del XML
+using System.Xml;
 
 namespace Proyecto1
 {
     class Program 
     {
-        // Lista global de pacientes
         static ListaEnlazada<Paciente> listaPacientes = new ListaEnlazada<Paciente>();
+        static Paciente? pacienteSeleccionado = null;
 
         static void Main(string[] args) 
         {
             int opcion = 0;
-            while (opcion != 6) 
+            while (opcion != 4) 
             {
                 Console.WriteLine("\n--- MENU PRINCIPAL ---");
                 Console.WriteLine("1. Cargar Archivo XML");
                 Console.WriteLine("2. Elegir Paciente");
-                Console.WriteLine("3. Ejecutar Simulación Paso a Paso");
-                Console.WriteLine("4. Ejecutar Simulación Automática");
-                Console.WriteLine("5. Limpiar Memoria");
-                Console.WriteLine("6. Salir");
+                Console.WriteLine("3. Limpiar Memoria");
+                Console.WriteLine("4. Salir");
                 Console.Write("Seleccione una opción: ");
                 
                 string entrada = Console.ReadLine() ?? "";
@@ -27,68 +25,71 @@ namespace Proyecto1
                 {
                     switch (opcion) 
                     {
-                        case 1: 
-                            CargarArchivo();
-                            break;
-                        case 5:
+                        case 1: CargarArchivo(); break;
+                        case 2: ElegirPaciente(); break;
+                        case 3:
                             listaPacientes.Limpiar();
-                            Console.WriteLine("Memoria de pacientes limpia.");
+                            pacienteSeleccionado = null;
+                            Console.WriteLine("Memoria limpia.");
                             break;
-                        case 6:
-                            Console.WriteLine("Saliendo del programa...");
-                            break;
-                        default:
-                            Console.WriteLine("Opción no válida.");
-                            break;
+                        case 4: Console.WriteLine("Saliendo..."); break;
                     }
                 }
             }
         }
 
-        // Método para cargar el XML (Opción 1)
-        static void CargarArchivo()
+        static void CargarArchivo() 
         {
-            Console.Write("Ingrese la ruta del archivo XML: ");
+            Console.Write("Ruta XML: ");
             string ruta = Console.ReadLine() ?? "";
             try 
             {
                 XmlDocument doc = new XmlDocument();
                 doc.Load(ruta);
-
-                XmlNodeList pacientesXml = doc.GetElementsByTagName("paciente");
-
-                foreach (XmlNode nodoPaciente in pacientesXml) 
+                XmlNodeList listaXml = doc.GetElementsByTagName("paciente");
+                foreach (XmlNode n in listaXml) 
                 {
-                    Paciente nuevoPaciente = new Paciente();
+                    Paciente p = new Paciente();
+                    p.Nombre = n.SelectSingleNode("datospersonales/nombre")?.InnerText;
+                    p.Edad = int.Parse(n.SelectSingleNode("datospersonales/edad")?.InnerText ?? "0");
+                    p.PeriodosMax = int.Parse(n.SelectSingleNode("periodos")?.InnerText ?? "0");
+                    p.M = int.Parse(n.SelectSingleNode("m")?.InnerText ?? "10"); 
                     
-                    nuevoPaciente.Nombre = nodoPaciente.SelectSingleNode("datospersonales/nombre")?.InnerText;
-                    
-                    string edadTexto = nodoPaciente.SelectSingleNode("datospersonales/edad")?.InnerText ?? "0";
-                    nuevoPaciente.Edad = int.Parse(edadTexto);
-                    
-                    // El enunciado dice que M es el tamaño de la rejilla
-                    string mTexto = nodoPaciente.SelectSingleNode("periodos")?.InnerText ?? "0";
-                    nuevoPaciente.M = int.Parse(mTexto);
-
-                    XmlNodeList celdasXml = nodoPaciente.SelectNodes("malla/celda");
-                    if (celdasXml != null)
+                    XmlNodeList celdas = n.SelectNodes("malla/celda");
+                    foreach (XmlNode c in celdas!) 
                     {
-                        foreach (XmlNode nodoCelda in celdasXml) 
-                        {
-                            Celda nuevaCelda = new Celda {
-                                Fila = int.Parse(nodoCelda.Attributes["f"]?.Value ?? "0"),
-                                Columna = int.Parse(nodoCelda.Attributes["c"]?.Value ?? "0")
-                            };
-                            nuevoPaciente.CelulasContagiadas.Insertar(nuevaCelda);
-                        }
+                        p.CelulasContagiadas.Insertar(new Celda {
+                            Fila = int.Parse(c.Attributes!["f"]!.Value),
+                            Columna = int.Parse(c.Attributes!["c"]!.Value)
+                        });
                     }
-                    listaPacientes.Insertar(nuevoPaciente);
+                    listaPacientes.Insertar(p);
                 }
-                Console.WriteLine("¡Archivo cargado con éxito!");
-            }
-            catch (Exception ex) 
+                Console.WriteLine("Carga exitosa.");
+            } 
+            catch (Exception ex) { Console.WriteLine("Error: " + ex.Message); }
+        }
+
+        static void ElegirPaciente() 
+        {
+            if (listaPacientes.Primero == null) 
             {
-                Console.WriteLine("Error al cargar el archivo: " + ex.Message);
+                Console.WriteLine("No hay pacientes cargados.");
+                return;
+            }
+            Nodo<Paciente>? aux = listaPacientes.Primero;
+            int i = 1;
+            while (aux != null) 
+            {
+                Console.WriteLine($"{i}. {aux.Valor?.Nombre}");
+                aux = aux.Siguiente; i++;
+            }
+            if (int.TryParse(Console.ReadLine(), out int sel)) 
+            {
+                aux = listaPacientes.Primero;
+                for (int j = 1; j < sel && aux != null; j++) aux = aux.Siguiente;
+                pacienteSeleccionado = aux?.Valor;
+                Console.WriteLine($"Paciente {pacienteSeleccionado?.Nombre} seleccionado.");
             }
         }
     }
