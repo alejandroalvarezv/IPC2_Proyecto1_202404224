@@ -18,6 +18,11 @@ namespace Proyecto1
         public int PeriodosMax { get; set; }
         public ListaCelda CelulasContagiadas { get; set; }
 
+        // Variables añadidas para el Análisis del Release 3
+        public string Diagnostico { get; set; } = "Leve";
+        public int n { get; set; } = 0;  // Periodo donde inicia el patrón
+        public int n1 { get; set; } = 0; // Tiempo de repetición
+
         public Paciente() 
         {
             CelulasContagiadas = new ListaCelda();
@@ -41,6 +46,38 @@ namespace Proyecto1
                 }
             }
             return cont;
+        }
+
+        public int ContarCelulasContagiadas() {
+            int contador = 0;
+            NodoCelda? actual = CelulasContagiadas.Primero;
+            while (actual != null) {
+                contador++;
+                actual = actual.Siguiente;
+            }
+            return contador;
+        }
+
+        public void MostrarEstadisticas(int periodo) {
+            int contagiadas = ContarCelulasContagiadas();
+            int totales = M * M;
+            int sanas = totales - contagiadas;
+
+            Console.WriteLine($"--- Periodo: {periodo} ---");
+            Console.WriteLine($"Células Contagiadas: {contagiadas}");
+            Console.WriteLine($"Células Sanas: {sanas}");
+            Console.WriteLine("-------------------------");
+        }
+
+        public string GenerarHuellaDigital() {
+            // Se usa System.Text.StringBuilder para optimizar la memoria al crear la huella
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            for (int f = 1; f <= M; f++) {
+                for (int c = 1; c <= M; c++) {
+                    sb.Append(EstaContagiada(f, c) ? "1" : "0");
+                }
+            }
+            return sb.ToString();
         }
 
         public void Evolucionar() {

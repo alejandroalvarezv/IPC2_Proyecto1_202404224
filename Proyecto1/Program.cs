@@ -8,6 +8,7 @@ namespace Proyecto1
         static ListaPaciente listaPacientes = new ListaPaciente();
         static Paciente? pacienteSeleccionado = null;
         static int contadorPeriodo = 0;
+        static ListaHistorial historialMallas = new ListaHistorial();
 
         static void Main(string[] args) 
         {
@@ -31,6 +32,7 @@ namespace Proyecto1
                         case 2: ElegirPaciente(); break;
                         case 3:
                             if (pacienteSeleccionado != null) {
+                                pacienteSeleccionado.MostrarEstadisticas(contadorPeriodo);
                                 pacienteSeleccionado.GenerarGrafica(contadorPeriodo);
                                 pacienteSeleccionado.Evolucionar();
                                 contadorPeriodo++;
@@ -38,14 +40,50 @@ namespace Proyecto1
                             } else Console.WriteLine("Seleccione un paciente primero.");
                             break;
                         case 4:
-                            if (pacienteSeleccionado != null) {
-                                for(int k = 0; k < pacienteSeleccionado.PeriodosMax; k++) {
-                                    pacienteSeleccionado.GenerarGrafica(k);
-                                    pacienteSeleccionado.Evolucionar();
-                                }
-                                Console.WriteLine("Simulación terminada.");
-                            } else Console.WriteLine("Seleccione un paciente primero.");
-                            break;
+                            if (pacienteSeleccionado != null) 
+                    {
+                        historialMallas.Limpiar(); // Empezamos historial nuevo
+                        bool patronEncontrado = false;
+        
+                    for (int k = 0; k <= pacienteSeleccionado.PeriodosMax; k++) 
+                    {
+                        pacienteSeleccionado.MostrarEstadisticas(k);
+                        pacienteSeleccionado.GenerarGrafica(k);
+
+                    string huellaActual = pacienteSeleccionado.GenerarHuellaDigital();
+                    int periodoRepetido = historialMallas.BuscarRepeticion(huellaActual);
+
+                        if (periodoRepetido != -1) 
+                {
+                pacienteSeleccionado.n = periodoRepetido;
+                pacienteSeleccionado.n1 = k - periodoRepetido;
+                
+                if (pacienteSeleccionado.n1 == 1) 
+                    pacienteSeleccionado.Diagnostico = "Mortal";
+                else 
+                    pacienteSeleccionado.Diagnostico = "Grave";
+
+                Console.WriteLine($"\nPATRÓN DETECTADO en periodo {k}:");
+                Console.WriteLine($"- Diagnóstico: {pacienteSeleccionado.Diagnostico}");
+                Console.WriteLine($"- n (inicio): {pacienteSeleccionado.n}");
+                Console.WriteLine($"- n1 (repetición): {pacienteSeleccionado.n1}");
+                
+                patronEncontrado = true;
+                break; 
+            }
+
+            historialMallas.Insertar(huellaActual, k);
+            pacienteSeleccionado.Evolucionar();
+        }
+
+        if (!patronEncontrado) 
+        {
+            pacienteSeleccionado.Diagnostico = "Leve";
+            Console.WriteLine("\nResultado: La enfermedad es LEVE (No se detectó patrón).");
+        }
+    } 
+    else Console.WriteLine("Seleccione un paciente primero.");
+    break;
                         case 5:
                             listaPacientes.Limpiar();
                             pacienteSeleccionado = null;
