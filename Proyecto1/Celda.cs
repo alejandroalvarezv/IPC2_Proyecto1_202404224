@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Diagnostics;
+using System.Text;
 
 namespace Proyecto1
 {
@@ -18,10 +19,9 @@ namespace Proyecto1
         public int PeriodosMax { get; set; }
         public ListaCelda CelulasContagiadas { get; set; }
 
-        // Variables añadidas para el Análisis del Release 3
         public string Diagnostico { get; set; } = "Leve";
-        public int n { get; set; } = 0;  // Periodo donde inicia el patrón
-        public int n1 { get; set; } = 0; // Tiempo de repetición
+        public int n { get; set; } = 0;
+        public int n1 { get; set; } = 0;
 
         public Paciente() 
         {
@@ -70,8 +70,7 @@ namespace Proyecto1
         }
 
         public string GenerarHuellaDigital() {
-            // Se usa System.Text.StringBuilder para optimizar la memoria al crear la huella
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             for (int f = 1; f <= M; f++) {
                 for (int c = 1; c <= M; c++) {
                     sb.Append(EstaContagiada(f, c) ? "1" : "0");
@@ -94,30 +93,44 @@ namespace Proyecto1
             this.CelulasContagiadas = proxima;
         }
 
+        // MÉTODO ACTUALIZADO PARA GENERAR REJILLA COMO EL PDF
         public void GenerarGrafica(int periodo) {
             string nombreBase = $"Paciente_{Nombre}_T{periodo}";
             try {
                 using (StreamWriter sw = new StreamWriter(nombreBase + ".dot")) {
                     sw.WriteLine("digraph G {");
-                    sw.WriteLine("  node [shape=box, label=\"\", width=0.3, height=0.3];");
+                    // Definimos el nodo como una tabla (rejilla)
+                    sw.WriteLine("  node [shape=plaintext];");
                     sw.WriteLine($"  label=\"Paciente: {Nombre} - Periodo: {periodo}\";");
+                    sw.WriteLine("  labelloc=\"t\";"); // Etiqueta en la parte superior
+
+                    sw.WriteLine("  tabla [label=<");
+                    sw.WriteLine("    <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"10\">");
+
                     for (int f = 1; f <= M; f++) {
+                        sw.WriteLine("      <TR>");
                         for (int c = 1; c <= M; c++) {
+                            // Si la celda está contagiada, fondo rojo; si no, fondo blanco
                             string color = EstaContagiada(f, c) ? "red" : "white";
-                            sw.WriteLine($"  n_{f}_{c} [style=filled, fillcolor={color}];");
+                            sw.WriteLine($"        <TD BGCOLOR=\"{color}\"></TD>");
                         }
+                        sw.WriteLine("      </TR>");
                     }
+
+                    sw.WriteLine("    </TABLE>");
+                    sw.WriteLine("  >];");
                     sw.WriteLine("}");
                 }
-                
+
                 ProcessStartInfo startInfo = new ProcessStartInfo();
+                // Asegúrate de que esta ruta sea correcta en tu PC
                 startInfo.FileName = @"C:\Program Files\Graphviz\bin\dot.exe";
                 startInfo.Arguments = $"-Tpng {nombreBase}.dot -o {nombreBase}.png";
                 startInfo.CreateNoWindow = true;
                 startInfo.UseShellExecute = false;
                 Process.Start(startInfo);
-            } catch (Exception) {
-                Console.WriteLine("Aviso: No se pudo generar PNG.");
+            } catch (Exception ex) {
+                Console.WriteLine("Aviso: No se pudo generar imagen: " + ex.Message);
             }
         }
     }

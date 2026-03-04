@@ -13,15 +13,16 @@ namespace Proyecto1
         static void Main(string[] args) 
         {
             int opcion = 0;
-            while (opcion != 6) 
+            while (opcion != 7) 
             {
                 Console.WriteLine("\n--- MENU PRINCIPAL ---");
-                Console.WriteLine("1. Cargar Archivo XML");
+                Console.WriteLine("1. Cargar Archivo XML (Entrada)");
                 Console.WriteLine("2. Elegir Paciente");
                 Console.WriteLine("3. Simulación paso a paso");
-                Console.WriteLine("4. Simulación Automática");
-                Console.WriteLine("5. Limpiar Memoria");
-                Console.WriteLine("6. Salir");
+                Console.WriteLine("4. Simulación Automática (Diagnóstico)");
+                Console.WriteLine("5. Generar Archivo XML de Salida");
+                Console.WriteLine("6. Limpiar Memoria");
+                Console.WriteLine("7. Salir");
                 Console.Write("Seleccione una opción: ");
                 
                 if (int.TryParse(Console.ReadLine(), out opcion)) 
@@ -30,64 +31,12 @@ namespace Proyecto1
                     {
                         case 1: CargarArchivo(); break;
                         case 2: ElegirPaciente(); break;
-                        case 3:
-                            if (pacienteSeleccionado != null) {
-                                pacienteSeleccionado.MostrarEstadisticas(contadorPeriodo);
-                                pacienteSeleccionado.GenerarGrafica(contadorPeriodo);
-                                pacienteSeleccionado.Evolucionar();
-                                contadorPeriodo++;
-                                Console.WriteLine($"Periodo {contadorPeriodo} completado.");
-                            } else Console.WriteLine("Seleccione un paciente primero.");
-                            break;
-                        case 4:
-                            if (pacienteSeleccionado != null) 
-                    {
-                        historialMallas.Limpiar(); // Empezamos historial nuevo
-                        bool patronEncontrado = false;
-        
-                    for (int k = 0; k <= pacienteSeleccionado.PeriodosMax; k++) 
-                    {
-                        pacienteSeleccionado.MostrarEstadisticas(k);
-                        pacienteSeleccionado.GenerarGrafica(k);
-
-                    string huellaActual = pacienteSeleccionado.GenerarHuellaDigital();
-                    int periodoRepetido = historialMallas.BuscarRepeticion(huellaActual);
-
-                        if (periodoRepetido != -1) 
-                {
-                pacienteSeleccionado.n = periodoRepetido;
-                pacienteSeleccionado.n1 = k - periodoRepetido;
-                
-                if (pacienteSeleccionado.n1 == 1) 
-                    pacienteSeleccionado.Diagnostico = "Mortal";
-                else 
-                    pacienteSeleccionado.Diagnostico = "Grave";
-
-                Console.WriteLine($"\nPATRÓN DETECTADO en periodo {k}:");
-                Console.WriteLine($"- Diagnóstico: {pacienteSeleccionado.Diagnostico}");
-                Console.WriteLine($"- n (inicio): {pacienteSeleccionado.n}");
-                Console.WriteLine($"- n1 (repetición): {pacienteSeleccionado.n1}");
-                
-                patronEncontrado = true;
-                break; 
-            }
-
-            historialMallas.Insertar(huellaActual, k);
-            pacienteSeleccionado.Evolucionar();
-        }
-
-        if (!patronEncontrado) 
-        {
-            pacienteSeleccionado.Diagnostico = "Leve";
-            Console.WriteLine("\nResultado: La enfermedad es LEVE (No se detectó patrón).");
-        }
-    } 
-    else Console.WriteLine("Seleccione un paciente primero.");
-    break;
-                        case 5:
+                        case 3: SimularPasoAPaso(); break;
+                        case 4: SimularAutomatico(); break;
+                        case 5: GenerarArchivoSalida(); break;
+                        case 6:
                             listaPacientes.Limpiar();
                             pacienteSeleccionado = null;
-                            contadorPeriodo = 0;
                             Console.WriteLine("Memoria limpia.");
                             break;
                     }
@@ -95,13 +44,16 @@ namespace Proyecto1
             }
         }
 
+        // LÓGICA DE CARGA FIEL AL PDF
         static void CargarArchivo() 
         {
-            Console.Write("Ruta XML: ");
+            Console.Write("Ingrese la ruta del archivo XML de entrada: ");
             string ruta = Console.ReadLine() ?? "";
             try {
                 XmlDocument doc = new XmlDocument();
                 doc.Load(ruta);
+                
+                // El PDF indica que los pacientes están en la raíz
                 XmlNodeList listaXml = doc.GetElementsByTagName("paciente");
                 foreach (XmlNode n in listaXml) {
                     Paciente p = new Paciente {
@@ -110,6 +62,8 @@ namespace Proyecto1
                         PeriodosMax = int.Parse(n.SelectSingleNode("periodos")?.InnerText ?? "0"),
                         M = int.Parse(n.SelectSingleNode("m")?.InnerText ?? "10")
                     };
+
+                    // Lectura de la malla inicial según el PDF (atributos f y c)
                     XmlNodeList? celdas = n.SelectNodes("malla/celda");
                     if (celdas != null) {
                         foreach (XmlNode c in celdas) {
@@ -121,28 +75,108 @@ namespace Proyecto1
                     }
                     listaPacientes.Insertar(p);
                 }
-                Console.WriteLine("Carga exitosa.");
-            } catch (Exception ex) { Console.WriteLine("Error: " + ex.Message); }
+                Console.WriteLine("Archivo de entrada cargado exitosamente.");
+            } catch (Exception ex) { Console.WriteLine("Error al cargar XML: " + ex.Message); }
         }
 
-        static void ElegirPaciente() 
-        {
-            if (listaPacientes.Primero == null) {
-                Console.WriteLine("No hay pacientes cargados.");
-                return;
+        static void GenerarArchivoSalida()
+{
+    if (listaPacientes.Primero == null) {
+        Console.WriteLine("No hay datos para exportar.");
+        return;
+    }
+
+    Console.Write("Nombre para el archivo de resultados (ej: resultados.xml): ");
+    string nombreArchivo = Console.ReadLine() ?? "resultados.xml";
+
+    try {
+        // Configuramos para que use UTF-8 y tenga indentación (como el ejemplo del PDF)
+        XmlWriterSettings settings = new XmlWriterSettings { 
+            Indent = true, 
+            Encoding = System.Text.Encoding.UTF8 
+        };
+
+        using (XmlWriter writer = XmlWriter.Create(nombreArchivo, settings)) {
+            writer.WriteStartDocument();
+            
+            // EL PDF PIDE QUE LA RAÍZ SEA <resultados>
+            writer.WriteStartElement("resultados");
+
+            NodoPaciente? aux = listaPacientes.Primero;
+            while (aux != null) {
+                Paciente? p = aux.Valor;
+                if (p != null) {
+                    writer.WriteStartElement("paciente");
+                    
+                    // Sección de datos personales (Nombre y Edad)
+                    writer.WriteStartElement("datospersonales");
+                    writer.WriteElementString("nombre", p.Nombre);
+                    writer.WriteElementString("edad", p.Edad.ToString());
+                    writer.WriteEndElement(); // Cierra datospersonales
+
+                    // Resultado del análisis (Mortal, Grave o Leve)
+                    writer.WriteElementString("resultado", p.Diagnostico);
+                    
+                    // Periodo donde se detectó el patrón e intervalo de repetición
+                    writer.WriteElementString("n", p.n.ToString());
+                    writer.WriteElementString("n1", p.n1.ToString());
+
+                    writer.WriteEndElement(); // Cierra paciente
+                }
+                aux = aux.Siguiente;
             }
+
+            writer.WriteEndElement(); // Cierra resultados
+            writer.WriteEndDocument();
+        }
+        Console.WriteLine($"\n¡Éxito! Archivo '{nombreArchivo}' generado siguiendo el formato del PDF.");
+    } catch (Exception ex) { 
+        Console.WriteLine("Error al crear el XML de salida: " + ex.Message); 
+    }
+}
+
+        static void SimularPasoAPaso() {
+            if (pacienteSeleccionado == null) { Console.WriteLine("Seleccione un paciente."); return; }
+            pacienteSeleccionado.MostrarEstadisticas(contadorPeriodo);
+            pacienteSeleccionado.GenerarGrafica(contadorPeriodo);
+            pacienteSeleccionado.Evolucionar();
+            contadorPeriodo++;
+            Console.WriteLine("Periodo procesado.");
+        }
+
+        static void SimularAutomatico() {
+            if (pacienteSeleccionado == null) { Console.WriteLine("Seleccione un paciente."); return; }
+            historialMallas.Limpiar();
+            bool fin = false;
+            for (int k = 0; k <= pacienteSeleccionado.PeriodosMax; k++) {
+                string huella = pacienteSeleccionado.GenerarHuellaDigital();
+                int rep = historialMallas.BuscarRepeticion(huella);
+                if (rep != -1) {
+                    pacienteSeleccionado.n = rep;
+                    pacienteSeleccionado.n1 = k - rep;
+                    pacienteSeleccionado.Diagnostico = (pacienteSeleccionado.n1 == 1) ? "Mortal" : "Grave";
+                    fin = true; break;
+                }
+                historialMallas.Insertar(huella, k);
+                pacienteSeleccionado.Evolucionar();
+            }
+            if (!fin) pacienteSeleccionado.Diagnostico = "Leve";
+            Console.WriteLine($"Análisis completo: {pacienteSeleccionado.Diagnostico}");
+        }
+
+        static void ElegirPaciente() {
+            if (listaPacientes.Primero == null) return;
             NodoPaciente? aux = listaPacientes.Primero;
             int i = 1;
             while (aux != null) {
-                Console.WriteLine($"{i}. {aux.Valor?.Nombre}");
-                aux = aux.Siguiente; i++;
+                Console.WriteLine($"{i++}. {aux.Valor?.Nombre}");
+                aux = aux.Siguiente;
             }
             if (int.TryParse(Console.ReadLine(), out int sel)) {
                 aux = listaPacientes.Primero;
                 for (int j = 1; j < sel && aux != null; j++) aux = aux.Siguiente;
                 pacienteSeleccionado = aux?.Valor;
                 contadorPeriodo = 0;
-                Console.WriteLine($"Paciente {pacienteSeleccionado?.Nombre} seleccionado.");
             }
         }
     }
