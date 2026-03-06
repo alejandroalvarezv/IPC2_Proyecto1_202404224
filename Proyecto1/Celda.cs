@@ -93,16 +93,14 @@ namespace Proyecto1
             this.CelulasContagiadas = proxima;
         }
 
-        // MÉTODO ACTUALIZADO PARA GENERAR REJILLA COMO EL PDF
         public void GenerarGrafica(int periodo) {
             string nombreBase = $"Paciente_{Nombre}_T{periodo}";
             try {
                 using (StreamWriter sw = new StreamWriter(nombreBase + ".dot")) {
                     sw.WriteLine("digraph G {");
-                    // Definimos el nodo como una tabla (rejilla)
                     sw.WriteLine("  node [shape=plaintext];");
                     sw.WriteLine($"  label=\"Paciente: {Nombre} - Periodo: {periodo}\";");
-                    sw.WriteLine("  labelloc=\"t\";"); // Etiqueta en la parte superior
+                    sw.WriteLine("  labelloc=\"t\";"); 
 
                     sw.WriteLine("  tabla [label=<");
                     sw.WriteLine("    <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"10\">");
@@ -110,7 +108,6 @@ namespace Proyecto1
                     for (int f = 1; f <= M; f++) {
                         sw.WriteLine("      <TR>");
                         for (int c = 1; c <= M; c++) {
-                            // Si la celda está contagiada, fondo rojo; si no, fondo blanco
                             string color = EstaContagiada(f, c) ? "red" : "white";
                             sw.WriteLine($"        <TD BGCOLOR=\"{color}\"></TD>");
                         }
@@ -123,7 +120,6 @@ namespace Proyecto1
                 }
 
                 ProcessStartInfo startInfo = new ProcessStartInfo();
-                // Asegúrate de que esta ruta sea correcta en tu PC
                 startInfo.FileName = @"C:\Program Files\Graphviz\bin\dot.exe";
                 startInfo.Arguments = $"-Tpng {nombreBase}.dot -o {nombreBase}.png";
                 startInfo.CreateNoWindow = true;

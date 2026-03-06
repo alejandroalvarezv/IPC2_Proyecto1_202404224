@@ -1,18 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pacientes>
-  <paciente>
-    <datospersonales>
-      <nombre>Alejandro</nombre>
-      <edad>20</edad>
-    </datospersonales>
-    <periodos>10</periodos>
-    <m>10</m>
-    <malla>
-      <celda f="1" c="2"/>
-      <celda f="2" c="3"/>
-      <celda f="3" c="1"/>
-      <celda f="3" c="2"/>
-      <celda f="3" c="3"/>
-    </malla>
-  </paciente>
+   <paciente>
+      <datospersonales>
+         <nombre>Lucas</nombre>
+         <edad>33</edad>
+      </datospersonales>
+      <periodos>15</periodos>
+      <m>10</m>
+      <rejilla>
+         <celda f="1" c="1" />
+         <celda f="2" c="1" />
+         <celda f="3" c="1" />
+         <celda f="4" c="1" />
+         <celda f="5" c="1" />
+         <celda f="6" c="1" />
+         <celda f="7" c="1" />
+         <celda f="8" c="1" />
+         <celda f="9" c="1" />
+         <celda f="10" c="1" />
+         <celda f="1" c="10" />
+         <celda f="2" c="10" />
+         <celda f="3" c="10" />
+         <celda f="4" c="10" />
+         <celda f="5" c="10" />
+         <celda f="6" c="10" />
+         <celda f="7" c="10" />
+         <celda f="8" c="10" />
+         <celda f="9" c="10" />
+         <celda f="10" c="10" />
+      </rejilla>
+   </paciente>
+   
 </pacientes>
